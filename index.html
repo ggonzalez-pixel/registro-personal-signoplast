@@ -12,7 +12,7 @@
     --steel:#3c5a78;
     --amber:#d98e23;
     --amber-2:#f0a93c;
-    --paper:#f3f1ea;
+    --paper:#faf9f5;
     --line:#dcd6c6;
     --ok:#2f7a4f;
     --warn:#b5481f;
@@ -353,11 +353,13 @@
     <div class="field">
       <label>Fecha</label>
       <input type="date" id="fFecha">
+      <span id="fDiaSemana" style="font-size:.7rem; color:#9fb0c2; margin-top:2px;"></span>
     </div>
     <div class="field">
       <label>Turno</label>
       <select id="fTurno">
         <option value="DIA">Día</option>
+        <option value="TARDE">Tarde</option>
         <option value="NOCHE">Noche</option>
       </select>
     </div>
@@ -608,6 +610,17 @@ function debounce(fn, ms){
 }
 
 $("fFecha").value = todayStr();
+
+const DIAS_SEMANA = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+function actualizarDiaSemana(){
+  const val = $("fFecha").value;
+  if(!val) { $("fDiaSemana").textContent = ""; return; }
+  const [y,m,d] = val.split("-").map(Number);
+  const fecha = new Date(y, m-1, d);
+  $("fDiaSemana").textContent = DIAS_SEMANA[fecha.getDay()];
+}
+actualizarDiaSemana();
+$("fFecha").addEventListener("change", actualizarDiaSemana);
 const savedVig = localStorage.getItem("sp_vigilador") || "";
 const savedTurno = localStorage.getItem("sp_turno") || "DIA";
 $("fVigilador").value = savedVig;
