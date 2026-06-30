@@ -405,7 +405,9 @@
         <span class="count" id="opCount"></span>
       </div>
       <div class="card-body">
-        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;" class="export-bar">
+        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; align-items:center;" class="export-bar">
+          <input type="text" id="buscadorOp" placeholder="🔍 Buscar por nombre o legajo..." style="flex:1; min-width:200px; padding:7px 10px; border:1px solid var(--line); border-radius:6px; font-size:.85rem;">
+          <button class="btn btn-ghost btn-sm" id="btnLimpiarBusqueda" style="display:none;">✕ Limpiar</button>
           <button class="btn btn-amber btn-sm" id="btnAddTemporal">+ Agregar persona no registrada</button>
           <button class="btn btn-ghost btn-sm" id="btnExportExcel">⬇ Exportar Excel (día completo)</button>
           <button class="btn btn-ghost btn-sm" id="btnExportPDF">🖨 Exportar PDF (día completo)</button>
@@ -684,13 +686,17 @@ function watchOperariosDelDia(){
 function renderOperarios(recMap){
   recMap = recMap || (renderOperarios._lastMap || {});
   renderOperarios._lastMap = recMap;
+  const busqueda = ($("buscadorOp") ? $("buscadorOp").value.toLowerCase().trim() : "");
   const activos = employees.filter(e=>e.estado!=="baja").sort((a,b)=>(a.nombre||"").localeCompare(b.nombre||""));
+  const filtrados = busqueda
+    ? activos.filter(e => (e.nombre||"").toLowerCase().includes(busqueda) || (e.legajo||"").toLowerCase().includes(busqueda))
+    : activos;
   const tbody = $("bodyOperarios");
   tbody.innerHTML = "";
-  $("opEmpty").style.display = activos.length ? "none" : "block";
-  $("opCount").textContent = activos.length + " empleados activos";
+  $("opEmpty").style.display = filtrados.length ? "none" : "block";
+  $("opCount").textContent = filtrados.length + (busqueda ? ` de ${activos.length}` : "") + " empleados activos";
 
-  activos.forEach(emp=>{
+  filtrados.forEach(emp=>{
     const rec = recMap[emp.id] || {};
     const tr = document.createElement("tr");
     if(emp.temporal) tr.classList.add("temporal");
@@ -721,6 +727,18 @@ function renderOperarios(recMap){
     tbody.appendChild(tr);
   });
 }
+
+// buscador operarios
+document.getElementById("buscadorOp").addEventListener("input", ()=>{
+  const val = document.getElementById("buscadorOp").value;
+  $("btnLimpiarBusqueda").style.display = val ? "inline-block" : "none";
+  renderOperarios();
+});
+$("btnLimpiarBusqueda").addEventListener("click", ()=>{
+  document.getElementById("buscadorOp").value = "";
+  $("btnLimpiarBusqueda").style.display = "none";
+  renderOperarios();
+});
 
 $("btnAddTemporal").addEventListener("click", async ()=>{
   const nombre = prompt("Nombre y apellido de la persona:");
