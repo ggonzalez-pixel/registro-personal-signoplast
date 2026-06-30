@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Ingreso — Signo Plast</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#10243e;
+    --navy-2:#16314f;
+    --steel:#3c5a78;
+    --amber:#d98e23;
+    --amber-2:#f0a93c;
+    --paper:#f3f1ea;
+    --line:#dcd6c6;
+    --ok:#2f7a4f;
+    --warn:#b5481f;
+    --text:#1d2530;
+    --muted:#6b7280;
+    font-family:'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text);
+    -webkit-tap-highlight-color: transparent;
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));
+    color:#fff;
+    padding:18px 20px 14px;
+    position:sticky;
+    top:0;
+    z-index:50;
+    box-shadow:0 2px 10px rgba(0,0,0,.2);
+  }
+  header h1{
+    margin:0 0 2px;
+    font-size:1.3rem;
+    letter-spacing:.3px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  header h1 .badge{
+    background:var(--amber);
+    color:#1d1303;
+    font-size:.62rem;
+    font-weight:700;
+    padding:2px 7px;
+    border-radius:3px;
+    letter-spacing:.6px;
+  }
+  header .sub{
+    font-size:.78rem;
+    color:#b9c6d6;
+    margin-bottom:12px;
+  }
+  .topbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .topbar .field{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .topbar label{
+    font-size:.62rem;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    color:#9fb0c2;
+  }
+  .topbar input, .topbar select{
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.25);
+    color:#fff;
+    padding:7px 9px;
+    border-radius:6px;
+    font-size:.85rem;
+  }
+  .topbar input::placeholder{color:#9fb0c2;}
+  .topbar input:focus, .topbar select:focus{outline:2px solid var(--amber-2);}
+
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    background:var(--navy-2);
+    padding:0 14px;
+    overflow-x:auto;
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  nav.tabs button{
+    background:none;
+    border:none;
+    color:#b9c6d6;
+    padding:11px 14px;
+    font-size:.82rem;
+    font-weight:600;
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    white-space:nowrap;
+  }
+  nav.tabs button.active{
+    color:#fff;
+    border-bottom-color:var(--amber);
+  }
+
+  main{
+    max-width:1100px;
+    margin:0 auto;
+    padding:18px 14px 60px;
+  }
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin-bottom:16px;
+    overflow:hidden;
+  }
+  .card-head{
+    padding:12px 16px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .card-head h2{
+    margin:0;
+    font-size:1rem;
+  }
+  .card-head .count{
+    font-size:.72rem;
+    color:var(--muted);
+  }
+  .card-body{padding:12px 16px;}
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.84rem;
+  }
+  th{
+    text-align:left;
+    font-size:.66rem;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    color:var(--muted);
+    border-bottom:2px solid var(--line);
+    padding:8px 6px;
+    position:sticky;
+    top:0;
+    background:#fff;
+  }
+  td{
+    padding:6px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  tr.temporal td:first-child{box-shadow:inset 3px 0 0 var(--amber);}
+  tr.ausente td{opacity:.5;}
+
+  input[type=time], input[type=text], input[type=number], select{
+    width:100%;
+    padding:6px 7px;
+    border:1px solid var(--line);
+    border-radius:5px;
+    font-size:.82rem;
+    background:#fdfcf9;
+  }
+  input[type=time]{width:90px;}
+  .row-num{color:var(--muted); font-variant-numeric:tabular-nums;}
+  .saved-flash{transition:background .4s;}
+  .saved-flash.flash{background:#e3f3e9;}
+
+  .btn{
+    border:none;
+    border-radius:6px;
+    padding:8px 14px;
+    font-size:.82rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--navy); color:#fff;}
+  .btn-primary:hover{background:var(--navy-2);}
+  .btn-amber{background:var(--amber); color:#241803;}
+  .btn-amber:hover{background:var(--amber-2);}
+  .btn-ghost{background:none; border:1px solid var(--line); color:var(--text);}
+  .btn-danger{background:#fff; border:1px solid var(--warn); color:var(--warn);}
+  .btn-sm{padding:4px 9px; font-size:.74rem;}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+
+  .grid-form{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(140px,1fr));
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .grid-form .field label{
+    font-size:.68rem;
+    color:var(--muted);
+    display:block;
+    margin-bottom:3px;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+  }
+
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    padding:30px 10px;
+    font-size:.85rem;
+  }
+
+  .pill{
+    display:inline-block;
+    font-size:.65rem;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:20px;
+    background:#fdf1de;
+    color:var(--amber);
+    margin-left:6px;
+  }
+  .pill.baja{background:#fbe7e3; color:var(--warn);}
+
+  #adminGate{
+    text-align:center;
+    padding:50px 16px;
+  }
+  #adminGate p{color:var(--muted); font-size:.85rem; max-width:340px; margin:6px auto 16px;}
+
+  .toast{
+    position:fixed;
+    bottom:18px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--navy);
+    color:#fff;
+    padding:10px 18px;
+    border-radius:8px;
+    font-size:.82rem;
+    opacity:0;
+    transition:all .25s;
+    pointer-events:none;
+    z-index:200;
+    box-shadow:0 4px 14px rgba(0,0,0,.25);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  #loginScreen{
+    position:fixed; inset:0; z-index:1000;
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  #loginScreen .box{
+    background:#fff; border-radius:12px; padding:32px 28px;
+    width:100%; max-width:340px; box-shadow:0 10px 40px rgba(0,0,0,.3);
+  }
+  #loginScreen h2{margin:0 0 4px; font-size:1.15rem; color:var(--navy);}
+  #loginScreen .tag{font-size:.78rem; color:var(--muted); margin-bottom:20px;}
+  #loginScreen .field{margin-bottom:12px;}
+  #loginScreen label{font-size:.7rem; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:4px;}
+  #loginScreen input{width:100%; padding:10px; border:1px solid var(--line); border-radius:6px; font-size:.9rem;}
+  #loginScreen .btn{width:100%; margin-top:6px; padding:11px;}
+  #loginError{color:var(--warn); font-size:.78rem; margin-top:10px; display:none;}
+
+  .userbar{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:.74rem; color:#b9c6d6; margin-top:8px;
+  }
+  .userbar button{
+    background:none; border:1px solid rgba(255,255,255,.3); color:#fff;
+    padding:4px 10px; border-radius:5px; font-size:.72rem; cursor:pointer;
+  }
+
+  .export-bar{display:flex; gap:8px; flex-wrap:wrap;}
+
+  @media print{
+    header, nav.tabs, .export-bar, #btnAddTemporal, .toast, input[type=time], input[type=text]{
+      background:transparent !important;
+    }
+    nav.tabs, .topbar input, .topbar select, .export-bar, #btnAddTemporal, .btn{ }
+    body.printing nav.tabs, body.printing .export-bar, body.printing #btnAddTemporal{display:none !important;}
+    body.printing header{background:#fff !important; color:#000 !important; box-shadow:none;}
+    body.printing header .badge{display:none;}
+    body.printing .topbar select, body.printing .topbar input{
+      background:#fff !important; color:#000 !important; border:none !important;
+    }
+  }
+
+  @media(max-width:640px){
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{display:none;}
+    tr{
+      border:1px solid var(--line);
+      border-radius:8px;
+      margin-bottom:10px;
+      padding:8px;
+    }
+    td{
+      border:none;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      padding:5px 2px;
+    }
+    td::before{
+      content:attr(data-label);
+      font-size:.65rem;
+      text-transform:uppercase;
+      color:var(--muted);
+      flex-shrink:0;
+      width:90px;
+    }
+    input[type=time]{width:100px; text-align:right;}
+  }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="box">
+    <h2>Registro de Ingreso</h2>
+    <div class="tag">Signo Plast — acceso restringido</div>
+    <div class="field">
+      <label>Usuario</label>
+      <input type="email" id="loginEmail" placeholder="usuario@signoplast.local" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="btnLogin">Ingresar</button>
+    <div id="loginError">Usuario o contraseña incorrectos.</div>
+  </div>
+</div>
+
+<header>
+  <h1>Registro de Ingreso de Personal <span class="badge">SIGNO PLAST</span></h1>
+  <div class="sub">Control de planta — operarios, proveedores y personal externo</div>
+  <div class="topbar">
+    <div class="field">
+      <label>Fecha</label>
+      <input type="date" id="fFecha">
+    </div>
+    <div class="field">
+      <label>Turno</label>
+      <select id="fTurno">
+        <option value="DIA">Día</option>
+        <option value="NOCHE">Noche</option>
+      </select>
+    </div>
+    <div class="field" style="flex:1; min-width:160px;">
+      <label>Vigilador</label>
+      <input type="text" id="fVigilador" placeholder="Nombre del guardia de turno">
+    </div>
+  </div>
+  <div class="userbar">
+    <span id="userEmailLabel"></span>
+    <button id="btnLogout">Cerrar sesión</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="operarios">Operarios</button>
+  <button class="tab-btn" data-tab="proveedores">Proveedores / Planta</button>
+  <button class="tab-btn" data-tab="externos">Empleados Externos</button>
+  <button class="tab-btn" data-tab="admin">Admin</button>
+</nav>
+
+<main>
+
+  <!-- OPERARIOS -->
+  <section id="panel-operarios" class="panel active">
+    <div class="card">
+      <div class="card-head">
+        <h2>Operarios — turno día</h2>
+        <span class="count" id="opCount"></span>
+      </div>
+      <div class="card-body">
+        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;" class="export-bar">
+          <button class="btn btn-amber btn-sm" id="btnAddTemporal">+ Agregar persona no registrada</button>
+          <button class="btn btn-ghost btn-sm" id="btnExportExcel">⬇ Exportar Excel (día completo)</button>
+          <button class="btn btn-ghost btn-sm" id="btnExportPDF">🖨 Exportar PDF (día completo)</button>
+        </div>
+        <div style="overflow-x:auto;">
+        <table id="tablaOperarios">
+          <thead>
+            <tr>
+              <th style="width:40px;">N°</th>
+              <th>Operario</th>
+              <th style="width:100px;">Entrada</th>
+              <th style="width:100px;">Salida</th>
+              <th>Observaciones</th>
+              <th style="width:40px;"></th>
+            </tr>
+          </thead>
+          <tbody id="bodyOperarios"></tbody>
+        </table>
+        </div>
+        <div class="empty" id="opEmpty" style="display:none;">No hay empleados activos cargados. Andá a la pestaña Admin para dar de alta.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROVEEDORES -->
+  <section id="panel-proveedores" class="panel">
+    <div class="card">
+      <div class="card-head"><h2>Nuevo movimiento — Proveedores / Planta</h2></div>
+      <div class="card-body">
+        <div class="grid-form" id="formProveedor">
+          <div class="field"><label>Empresa</label><input type="text" data-k="empresa"></div>
+          <div class="field"><label>Nombre</label><input type="text" data-k="nombre"></div>
+          <div class="field"><label>DNI</label><input type="text" data-k="dni"></div>
+          <div class="field"><label>Vehículo</label><input type="text" data-k="vehiculo"></div>
+          <div class="field"><label>Patente</label><input type="text" data-k="patente"></div>
+          <div class="field"><label>Persona a visitar</label><input type="text" data-k="personaVisitar"></div>
+          <div class="field"><label>Entrada</label><input type="time" data-k="entrada"></div>
+          <div class="field"><label>Salida</label><input type="time" data-k="salida"></div>
+          <div class="field" style="grid-column:1/-1;"><label>Observaciones</label><input type="text" data-k="observaciones"></div>
+        </div>
+        <button class="btn btn-primary" onclick="agregarMovimiento('proveedores')">Registrar ingreso</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Movimientos del día</h2><span class="count" id="provCount"></span></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table id="tablaProveedores">
+          <thead><tr>
+            <th>Empresa</th><th>Nombre</th><th>DNI</th><th>Vehículo</th><th>Patente</th>
+            <th>Visita a</th><th>Entrada</th><th>Salida</th><th>Obs.</th><th></th>
+          </tr></thead>
+          <tbody id="bodyProveedores"></tbody>
+        </table>
+        <div class="empty" id="provEmpty" style="display:none;">Sin movimientos registrados hoy.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXTERNOS -->
+  <section id="panel-externos" class="panel">
+    <div class="card">
+      <div class="card-head"><h2>Nuevo movimiento — Empleados Externos</h2></div>
+      <div class="card-body">
+        <div class="grid-form" id="formExterno">
+          <div class="field"><label>Empresa</label><input type="text" data-k="empresa"></div>
+          <div class="field"><label>Nombre</label><input type="text" data-k="nombre"></div>
+          <div class="field"><label>DNI</label><input type="text" data-k="dni"></div>
+          <div class="field"><label>Vehículo</label><input type="text" data-k="vehiculo"></div>
+          <div class="field"><label>Patente</label><input type="text" data-k="patente"></div>
+          <div class="field"><label>Persona a visitar</label><input type="text" data-k="personaVisitar"></div>
+          <div class="field"><label>Entrada</label><input type="time" data-k="entrada"></div>
+          <div class="field"><label>Salida</label><input type="time" data-k="salida"></div>
+          <div class="field" style="grid-column:1/-1;"><label>Observaciones</label><input type="text" data-k="observaciones"></div>
+        </div>
+        <button class="btn btn-primary" onclick="agregarMovimiento('externos')">Registrar ingreso</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Movimientos del día</h2><span class="count" id="extCount"></span></div>
+      <div class="card-body" style="overflow-x:auto;">
+        <table id="tablaExternos">
+          <thead><tr>
+            <th>Empresa</th><th>Nombre</th><th>DNI</th><th>Vehículo</th><th>Patente</th>
+            <th>Visita a</th><th>Entrada</th><th>Salida</th><th>Obs.</th><th></th>
+          </tr></thead>
+          <tbody id="bodyExternos"></tbody>
+        </table>
+        <div class="empty" id="extEmpty" style="display:none;">Sin movimientos registrados hoy.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="panel-admin" class="panel">
+    <div id="adminGate">
+      <h2>Acceso de administrador</h2>
+      <p>Esta sección permite dar de alta, modificar o dar de baja empleados, y regularizar altas temporales cargadas por los guardias.</p>
+      <button class="btn btn-amber" id="btnLoginAdmin">Ingresar como administrador</button>
+    </div>
+
+    <div id="adminContent" style="display:none;">
+
+      <div class="card" id="cardTemporales" style="display:none;">
+        <div class="card-head"><h2>⚠ Personas temporales pendientes de regularizar</h2><span class="count" id="tempCount"></span></div>
+        <div class="card-body" style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Nombre</th><th style="width:120px;">N° Legajo</th><th style="width:170px;"></th></tr></thead>
+            <tbody id="bodyTemporales"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Empleados</h2>
+          <span class="count" id="empCount"></span>
+        </div>
+        <div class="card-body">
+          <div class="grid-form" style="align-items:end;">
+            <div class="field"><label>Nombre y apellido</label><input type="text" id="newEmpNombre" placeholder="Apellido, Nombre"></div>
+            <div class="field"><label>N° Legajo</label><input type="text" id="newEmpLegajo" placeholder="Ej: 132"></div>
+            <div class="field" style="display:flex; align-items:flex-end;">
+              <button class="btn btn-primary" style="width:100%;" id="btnAddEmpleado">+ Agregar empleado</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th style="width:80px;">Legajo</th><th>Nombre</th><th style="width:90px;">Estado</th><th style="width:170px;"></th></tr></thead>
+            <tbody id="bodyEmpleados"></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, addDoc, getDocs, getDoc,
+  updateDoc, deleteDoc, query, where, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDOb_-ImZdU58cB08jykkTIX315mrJbrLQ",
+  authDomain: "registro-sp-a4557.firebaseapp.com",
+  projectId: "registro-sp-a4557",
+  storageBucket: "registro-sp-a4557.firebasestorage.app",
+  messagingSenderId: "198407777951",
+  appId: "1:198407777951:web:9f3f013eba765de29ebcaa"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const ADMIN_PASSWORD = "SignoPlast2026";
+
+// ---------- AUTH ----------
+const loginScreen = document.getElementById("loginScreen");
+document.getElementById("btnLogin").addEventListener("click", doLogin);
+document.getElementById("loginPass").addEventListener("keydown", (e)=>{ if(e.key==="Enter") doLogin(); });
+document.getElementById("loginEmail").addEventListener("keydown", (e)=>{ if(e.key==="Enter") doLogin(); });
+
+function doLogin(){
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass = document.getElementById("loginPass").value;
+  const errEl = document.getElementById("loginError");
+  errEl.style.display = "none";
+  if(!email || !pass) return;
+  signInWithEmailAndPassword(auth, email, pass)
+    .catch(()=>{ errEl.style.display = "block"; });
+}
+
+document.getElementById("btnLogout").addEventListener("click", ()=>{
+  if(confirm("¿Cerrar sesión?")) signOut(auth);
+});
+
+onAuthStateChanged(auth, (user)=>{
+  if(user){
+    loginScreen.style.display = "none";
+    document.getElementById("userEmailLabel").textContent = user.email;
+  } else {
+    loginScreen.style.display = "flex";
+    document.getElementById("userEmailLabel").textContent = "";
+  }
+});
+
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=>t.classList.remove("show"), 1800);
+}
+function todayStr(){
+  const d = new Date();
+  const tz = d.getTimezoneOffset()*60000;
+  return new Date(d-tz).toISOString().slice(0,10);
+}
+function flash(el){
+  el.classList.add("flash");
+  setTimeout(()=>el.classList.remove("flash"), 400);
+}
+function debounce(fn, ms){
+  let t;
+  return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); };
+}
+
+$("fFecha").value = todayStr();
+const savedVig = localStorage.getItem("sp_vigilador") || "";
+const savedTurno = localStorage.getItem("sp_turno") || "DIA";
+$("fVigilador").value = savedVig;
+$("fTurno").value = savedTurno;
+$("fVigilador").addEventListener("input", ()=>localStorage.setItem("sp_vigilador", $("fVigilador").value));
+$("fTurno").addEventListener("change", ()=>{ localStorage.setItem("sp_turno", $("fTurno").value); renderAll(); });
+$("fFecha").addEventListener("change", renderAll);
+
+// ---------- tabs ----------
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    btn.classList.add("active");
+    $("panel-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ---------- state ----------
+let employees = [];     // all employees (live)
+let recordsCache = {};  // fecha -> {operarios:{empId:rec}, proveedores:[...], externos:[...]}
+
+// live employees listener
+onSnapshot(collection(db, "employees"), (snap)=>{
+  employees = snap.docs.map(d=>({id:d.id, ...d.data()}));
+  renderOperarios();
+  renderAdminEmpleados();
+});
+
+function currentFecha(){ return $("fFecha").value; }
+
+function recordId(tipo, fecha, key){ return `${fecha}_${tipo}_${key}`; }
+
+// ---------- OPERARIOS ----------
+let unsubOperarios = null;
+function watchOperariosDelDia(){
+  if(unsubOperarios) unsubOperarios();
+  const fecha = currentFecha();
+  const q = query(collection(db,"records"), where("fecha","==",fecha), where("tipo","==","operario"));
+  unsubOperarios = onSnapshot(q, (snap)=>{
+    const map = {};
+    snap.forEach(d=>{ map[d.data().employeeId] = {id:d.id, ...d.data()}; });
+    renderOperarios(map);
+  });
+}
+
+function renderOperarios(recMap){
+  recMap = recMap || (renderOperarios._lastMap || {});
+  renderOperarios._lastMap = recMap;
+  const activos = employees.filter(e=>e.estado!=="baja").sort((a,b)=>(a.nombre||"").localeCompare(b.nombre||""));
+  const tbody = $("bodyOperarios");
+  tbody.innerHTML = "";
+  $("opEmpty").style.display = activos.length ? "none" : "block";
+  $("opCount").textContent = activos.length + " empleados activos";
+
+  activos.forEach(emp=>{
+    const rec = recMap[emp.id] || {};
+    const tr = document.createElement("tr");
+    if(emp.temporal) tr.classList.add("temporal");
+    tr.innerHTML = `
+      <td data-label="N°" class="row-num">${emp.legajo || "-"}</td>
+      <td data-label="Operario">${emp.nombre}${emp.temporal ? '<span class="pill">TEMPORAL</span>' : ''}</td>
+      <td data-label="Entrada"><input type="time" class="ent saved-flash" value="${rec.entrada||''}"></td>
+      <td data-label="Salida"><input type="time" class="sal saved-flash" value="${rec.salida||''}"></td>
+      <td data-label="Observaciones"><input type="text" class="obs saved-flash" value="${rec.observaciones||''}" placeholder="—"></td>
+      <td></td>
+    `;
+    const save = debounce(async ()=>{
+      const fecha = currentFecha();
+      const id = recordId("operario", fecha, emp.id);
+      await setDoc(doc(db,"records",id), {
+        fecha, tipo:"operario", employeeId: emp.id,
+        nombre: emp.nombre, legajo: emp.legajo || "",
+        turno: $("fTurno").value, vigilador: $("fVigilador").value,
+        entrada: tr.querySelector(".ent").value,
+        salida: tr.querySelector(".sal").value,
+        observaciones: tr.querySelector(".obs").value,
+        updatedAt: serverTimestamp()
+      }, {merge:true});
+      flash(tr.querySelector(".obs"));
+      toast("Guardado");
+    }, 500);
+    tr.querySelectorAll("input").forEach(inp=>inp.addEventListener("change", save));
+    tbody.appendChild(tr);
+  });
+}
+
+$("btnAddTemporal").addEventListener("click", async ()=>{
+  const nombre = prompt("Nombre y apellido de la persona:");
+  if(!nombre) return;
+  await addDoc(collection(db,"employees"), {
+    nombre, legajo:"", estado:"activo", temporal:true, createdAt: serverTimestamp()
+  });
+  toast("Persona agregada — marcala como temporal en Admin para regularizar");
+});
+
+// ---------- PROVEEDORES / EXTERNOS ----------
+function watchMovimientos(tipo){
+  const fecha = currentFecha();
+  const tipoDB = tipo==="proveedores" ? "proveedor" : "externo";
+  const q = query(collection(db,"records"), where("fecha","==",fecha), where("tipo","==",tipoDB));
+  return onSnapshot(q, (snap)=>{
+    const items = [];
+    snap.forEach(d=>items.push({id:d.id, ...d.data()}));
+    items.sort((a,b)=>(a.entrada||"").localeCompare(b.entrada||""));
+    renderMovimientos(tipo, items);
+  });
+}
+let unsubProv=null, unsubExt=null;
+
+function renderMovimientos(tipo, items){
+  const bodyId = tipo==="proveedores" ? "bodyProveedores" : "bodyExternos";
+  const emptyId = tipo==="proveedores" ? "provEmpty" : "extEmpty";
+  const countId = tipo==="proveedores" ? "provCount" : "extCount";
+  const tbody = $(bodyId);
+  tbody.innerHTML = "";
+  $(emptyId).style.display = items.length ? "none" : "block";
+  $(countId).textContent = items.length + " registros";
+  items.forEach(it=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td data-label="Empresa">${it.empresa||''}</td>
+      <td data-label="Nombre">${it.nombre||''}</td>
+      <td data-label="DNI">${it.dni||''}</td>
+      <td data-label="Vehículo">${it.vehiculo||''}</td>
+      <td data-label="Patente">${it.patente||''}</td>
+      <td data-label="Visita a">${it.personaVisitar||''}</td>
+      <td data-label="Entrada">${it.entrada||''}</td>
+      <td data-label="Salida"><input type="time" class="sal-edit" value="${it.salida||''}" style="width:90px;"></td>
+      <td data-label="Obs.">${it.observaciones||''}</td>
+      <td><button class="btn btn-danger btn-sm">Borrar</button></td>
+    `;
+    tr.querySelector(".sal-edit").addEventListener("change", async (e)=>{
+      await updateDoc(doc(db,"records",it.id), {salida:e.target.value});
+      toast("Salida actualizada");
+    });
+    tr.querySelector("button").addEventListener("click", async ()=>{
+      if(confirm("¿Borrar este registro?")){
+        await deleteDoc(doc(db,"records",it.id));
+        toast("Registro eliminado");
+      }
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+window.agregarMovimiento = async function(tipo){
+  const formId = tipo==="proveedores" ? "formProveedor" : "formExterno";
+  const data = {};
+  document.querySelectorAll(`#${formId} [data-k]`).forEach(inp=>{
+    data[inp.dataset.k] = inp.value;
+    if(inp.type!=="time") inp.value="";
+  });
+  if(!data.nombre && !data.empresa){
+    toast("Completá al menos empresa o nombre");
+    return;
+  }
+  await addDoc(collection(db,"records"), {
+    ...data,
+    fecha: currentFecha(),
+    tipo: tipo==="proveedores" ? "proveedor" : "externo",
+    turno: $("fTurno").value,
+    vigilador: $("fVigilador").value,
+    createdAt: serverTimestamp()
+  });
+  // limpiar inputs de tiempo también
+  document.querySelectorAll(`#${formId} [data-k]`).forEach(inp=>inp.value="");
+  toast("Movimiento registrado");
+};
+
+// ---------- ADMIN ----------
+$("btnLoginAdmin").addEventListener("click", ()=>{
+  const pass = prompt("Contraseña de administrador:");
+  if(pass === ADMIN_PASSWORD){
+    $("adminGate").style.display = "none";
+    $("adminContent").style.display = "block";
+    renderAdminEmpleados();
+  } else if(pass !== null){
+    toast("Contraseña incorrecta");
+  }
+});
+
+$("btnAddEmpleado").addEventListener("click", async ()=>{
+  const nombre = $("newEmpNombre").value.trim();
+  const legajo = $("newEmpLegajo").value.trim();
+  if(!nombre){ toast("Ingresá el nombre"); return; }
+  await addDoc(collection(db,"employees"), {
+    nombre, legajo, estado:"activo", temporal:false, createdAt: serverTimestamp()
+  });
+  $("newEmpNombre").value=""; $("newEmpLegajo").value="";
+  toast("Empleado agregado");
+});
+
+function renderAdminEmpleados(){
+  const tbody = $("bodyEmpleados");
+  if(!tbody) return;
+  const sorted = [...employees].sort((a,b)=>(a.nombre||"").localeCompare(b.nombre||""));
+  tbody.innerHTML = "";
+  $("empCount").textContent = sorted.length + " en total";
+  sorted.forEach(emp=>{
+    const tr = document.createElement("tr");
+    const estadoLabel = emp.estado==="baja" ? '<span class="pill baja">BAJA</span>' : '<span class="pill" style="background:#e3f3e9;color:var(--ok);">ACTIVO</span>';
+    tr.innerHTML = `
+      <td data-label="Legajo"><input type="text" class="legajo-edit" value="${emp.legajo||''}" style="width:80px;"></td>
+      <td data-label="Nombre"><input type="text" class="nombre-edit" value="${emp.nombre||''}"></td>
+      <td data-label="Estado">${estadoLabel}</td>
+      <td style="display:flex; gap:6px;">
+        <button class="btn btn-ghost btn-sm btn-toggle">${emp.estado==="baja" ? "Reactivar" : "Dar de baja"}</button>
+      </td>
+    `;
+    tr.querySelector(".legajo-edit").addEventListener("change", async (e)=>{
+      await updateDoc(doc(db,"employees",emp.id), {legajo:e.target.value});
+      toast("Legajo actualizado");
+    });
+    tr.querySelector(".nombre-edit").addEventListener("change", async (e)=>{
+      await updateDoc(doc(db,"employees",emp.id), {nombre:e.target.value});
+      toast("Nombre actualizado");
+    });
+    tr.querySelector(".btn-toggle").addEventListener("click", async ()=>{
+      const nuevoEstado = emp.estado==="baja" ? "activo" : "baja";
+      await updateDoc(doc(db,"employees",emp.id), {estado:nuevoEstado});
+      toast(nuevoEstado==="baja" ? "Empleado dado de baja" : "Empleado reactivado");
+    });
+    tbody.appendChild(tr);
+  });
+
+  // temporales
+  const temporales = employees.filter(e=>e.temporal && e.estado!=="baja");
+  $("cardTemporales").style.display = temporales.length ? "block" : "none";
+  $("tempCount").textContent = temporales.length + " pendientes";
+  const tbodyT = $("bodyTemporales");
+  tbodyT.innerHTML = "";
+  temporales.forEach(emp=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td data-label="Nombre">${emp.nombre}</td>
+      <td data-label="Legajo"><input type="text" class="legajo-temp" placeholder="N° legajo" style="width:100px;"></td>
+      <td style="display:flex; gap:6px;">
+        <button class="btn btn-primary btn-sm btn-regularizar">Regularizar</button>
+        <button class="btn btn-danger btn-sm btn-borrar-temp">Borrar</button>
+      </td>
+    `;
+    tr.querySelector(".btn-regularizar").addEventListener("click", async ()=>{
+      const legajo = tr.querySelector(".legajo-temp").value.trim();
+      await updateDoc(doc(db,"employees",emp.id), {temporal:false, legajo: legajo || emp.legajo || ""});
+      toast("Empleado regularizado");
+    });
+    tr.querySelector(".btn-borrar-temp").addEventListener("click", async ()=>{
+      if(confirm("¿Eliminar esta persona temporal?")){
+        await deleteDoc(doc(db,"employees",emp.id));
+        toast("Eliminado");
+      }
+    });
+    tbodyT.appendChild(tr);
+  });
+}
+
+// ---------- EXPORTAR EXCEL ----------
+async function exportarExcel(){
+  const fecha = currentFecha();
+  const turno = $("fTurno").value;
+  const vigilador = $("fVigilador").value;
+
+  // Operarios
+  const qOp = query(collection(db,"records"), where("fecha","==",fecha), where("tipo","==","operario"));
+  const snapOp = await getDocs(qOp);
+  const opMap = {};
+  snapOp.forEach(d=>{ opMap[d.data().employeeId] = d.data(); });
+  const activos = employees.filter(e=>e.estado!=="baja").sort((a,b)=>(a.nombre||"").localeCompare(b.nombre||""));
+  const rowsOp = [["N°","Operario","Entrada","Salida","Observaciones"]];
+  activos.forEach(emp=>{
+    const r = opMap[emp.id] || {};
+    rowsOp.push([emp.legajo||"", emp.nombre, r.entrada||"", r.salida||"", r.observaciones||""]);
+  });
+
+  // Proveedores
+  const qProv = query(collection(db,"records"), where("fecha","==",fecha), where("tipo","==","proveedor"));
+  const snapProv = await getDocs(qProv);
+  const rowsProv = [["Empresa","Nombre","DNI","Vehículo","Patente","Visita a","Entrada","Salida","Observaciones"]];
+  snapProv.forEach(d=>{ const it=d.data(); rowsProv.push([it.empresa||"",it.nombre||"",it.dni||"",it.vehiculo||"",it.patente||"",it.personaVisitar||"",it.entrada||"",it.salida||"",it.observaciones||""]); });
+
+  // Externos
+  const qExt = query(collection(db,"records"), where("fecha","==",fecha), where("tipo","==","externo"));
+  const snapExt = await getDocs(qExt);
+  const rowsExt = [["Empresa","Nombre","DNI","Vehículo","Patente","Visita a","Entrada","Salida","Observaciones"]];
+  snapExt.forEach(d=>{ const it=d.data(); rowsExt.push([it.empresa||"",it.nombre||"",it.dni||"",it.vehiculo||"",it.patente||"",it.personaVisitar||"",it.entrada||"",it.salida||"",it.observaciones||""]); });
+
+  const wb = XLSX.utils.book_new();
+  const wsOp = XLSX.utils.aoa_to_sheet([
+    [`Registro diario — ${fecha} — Turno ${turno} — Vigilador: ${vigilador}`],
+    [], ...rowsOp
+  ]);
+  const wsProv = XLSX.utils.aoa_to_sheet(rowsProv);
+  const wsExt = XLSX.utils.aoa_to_sheet(rowsExt);
+  XLSX.utils.book_append_sheet(wb, wsOp, "Operarios");
+  XLSX.utils.book_append_sheet(wb, wsProv, "Proveedores-Planta");
+  XLSX.utils.book_append_sheet(wb, wsExt, "Empleados Externos");
+  XLSX.writeFile(wb, `Registro_${fecha}.xlsx`);
+  toast("Excel descargado");
+}
+$("btnExportExcel").addEventListener("click", exportarExcel);
+
+// ---------- EXPORTAR PDF (vista de impresión) ----------
+$("btnExportPDF").addEventListener("click", ()=>{
+  document.body.classList.add("printing");
+  document.querySelectorAll(".panel").forEach(p=>p.classList.add("active"));
+  window.print();
+  setTimeout(()=>{
+    document.body.classList.remove("printing");
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    document.querySelector('.tab-btn[data-tab="operarios"]').click();
+  }, 300);
+});
+
+// ---------- render orchestration ----------
+function renderAll(){
+  watchOperariosDelDia();
+  if(unsubProv) unsubProv();
+  if(unsubExt) unsubExt();
+  unsubProv = watchMovimientos("proveedores");
+  unsubExt = watchMovimientos("externos");
+}
+renderAll();
+</script>
+</body>
+</html>
