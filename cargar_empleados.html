@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Carga inicial de empleados — Signo Plast</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f3f1ea; }
+  h2 { color: #10243e; }
+  button { background: #10243e; color: #fff; border: none; padding: 12px 24px; border-radius: 6px; font-size: 1rem; cursor: pointer; margin-top: 10px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  #log { margin-top: 20px; background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 14px; font-size: .82rem; line-height: 1.6; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+  .ok { color: #2f7a4f; } .err { color: #b5481f; }
+</style>
+</head>
+<body>
+<h2>Carga inicial de empleados</h2>
+<p>Este script carga los <strong>83 empleados</strong> de la planilla directamente a Firestore.<br>Ejecutar <strong>una sola vez</strong>. No cierra la pestaña hasta que diga "¡Listo!".</p>
+<button id="btnCargar">Cargar empleados a Firebase</button>
+<div id="log"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDOb_-ImZdU58cB08jykkTIX315mrJbrLQ",
+  authDomain: "registro-sp-a4557.firebaseapp.com",
+  projectId: "registro-sp-a4557",
+  storageBucket: "registro-sp-a4557.firebasestorage.app",
+  messagingSenderId: "198407777951",
+  appId: "1:198407777951:web:9f3f013eba765de29ebcaa"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const empleados = [
+  {legajo:"1", nombre:"Leguizamón Ana"},
+  {legajo:"2", nombre:"Amarilla Miguel Angel (hijo)"},
+  {legajo:"3", nombre:"Aramayo Miguel Angel"},
+  {legajo:"5", nombre:"Barraza Alejandro"},
+  {legajo:"6", nombre:"Juarez Ariel"},
+  {legajo:"11", nombre:"Navarro, Ricardo"},
+  {legajo:"12", nombre:"Bocacini Alejandro"},
+  {legajo:"14", nombre:"Tadiotto, Marcelo"},
+  {legajo:"15", nombre:"Cardozo Eduardo"},
+  {legajo:"16", nombre:"Pagotti Mariano"},
+  {legajo:"17", nombre:"Fernandez Fernando"},
+  {legajo:"18", nombre:"Tañski, Anibal"},
+  {legajo:"19", nombre:"Benitez Fabian"},
+  {legajo:"25", nombre:"Coronel Diego"},
+  {legajo:"29", nombre:"Rojas, Jonathan"},
+  {legajo:"30", nombre:"Aramayo Arnaldo"},
+  {legajo:"31", nombre:"Esquivel Zarza Luis"},
+  {legajo:"33", nombre:"Torres, Gustavo A."},
+  {legajo:"34", nombre:"Cipriano, Carlos"},
+  {legajo:"35", nombre:"Quiroga, Karina"},
+  {legajo:"37", nombre:"Amarilla Wilson"},
+  {legajo:"38", nombre:"Diaz Carlos"},
+  {legajo:"39", nombre:"Salas, Marcelo"},
+  {legajo:"40", nombre:"Perez, Claudio"},
+  {legajo:"46", nombre:"Rios, Ariel"},
+  {legajo:"47", nombre:"Milani Miguel"},
+  {legajo:"50", nombre:"Peralta, Omar"},
+  {legajo:"56", nombre:"Borelli Carlos"},
+  {legajo:"57", nombre:"Pereyra Oscar"},
+  {legajo:"58", nombre:"Meliendre, Carlos"},
+  {legajo:"59", nombre:"Marrone, Nestor"},
+  {legajo:"60", nombre:"Sosa Carlos Alberto"},
+  {legajo:"63", nombre:"Amarilla Daniel"},
+  {legajo:"65", nombre:"Frias Benjamín"},
+  {legajo:"67", nombre:"Fernandez Maximiliano"},
+  {legajo:"68", nombre:"Alcaraz Roberto"},
+  {legajo:"72", nombre:"Amarilla Miguel Angel"},
+  {legajo:"73", nombre:"Alvarez Carlos"},
+  {legajo:"74", nombre:"Barraza Miguel Angel"},
+  {legajo:"80", nombre:"Juarez Mario"},
+  {legajo:"83", nombre:"Gonzalez Gustavo"},
+  {legajo:"84", nombre:"Prpic Jorge"},
+  {legajo:"85", nombre:"Ortiz, Carlos"},
+  {legajo:"88", nombre:"Bonilla, Julian"},
+  {legajo:"90", nombre:"Rios, Gaston"},
+  {legajo:"91", nombre:"Cerdan Juan Carlos"},
+  {legajo:"92", nombre:"Jimenez Roberto"},
+  {legajo:"94", nombre:"Alarcon Ladislao"},
+  {legajo:"98", nombre:"Ojeda Arnaldo Felix"},
+  {legajo:"103", nombre:"Ojeda Alberto Simon"},
+  {legajo:"105", nombre:"Romero Gabriel Hernan"},
+  {legajo:"116", nombre:"Ojeda Hugo Ariel"},
+  {legajo:"117", nombre:"Lopez, Diego Anibal"},
+  {legajo:"120", nombre:"Molina Aguilar Walter A."},
+  {legajo:"121", nombre:"Nemer Diego Sebastian"},
+  {legajo:"131", nombre:"Robledo Martin"},
+  {legajo:"132", nombre:"Prada Jonathan"},
+  {legajo:"134", nombre:"Ortiz, Roberto claudio"},
+  {legajo:"136", nombre:"Ottone, Melanie"},
+  {legajo:"143", nombre:"Campdepadros Pablo"},
+  {legajo:"145", nombre:"Font Emir"},
+  {legajo:"146", nombre:"Ledesma Facundo"},
+  {legajo:"147", nombre:"Gonzalez Franco"},
+  {legajo:"148", nombre:"Carballo Sergio"},
+  {legajo:"153", nombre:"Gatica Walter"},
+  {legajo:"154", nombre:"Candio Gisela"},
+  {legajo:"155", nombre:"Antunez Facundo"},
+  {legajo:"157", nombre:"Del Marmol Natanael"},
+  {legajo:"158", nombre:"Gaona Gaona Gabriel"},
+  {legajo:"159", nombre:"Biaggioni Gustavo"},
+  {legajo:"160", nombre:"Ledesma Jorge Dario"},
+  {legajo:"161", nombre:"Espinola Gaona Agustin"},
+  {legajo:"162", nombre:"Veron Marcelo Nicolas"},
+  {legajo:"164", nombre:"Hinding Héctor Gabriel"},
+  {legajo:"165", nombre:"Sanz Sebastian Jorge"},
+  {legajo:"166", nombre:"Barraza Carlos Gabriel"},
+  {legajo:"167", nombre:"Espindola Agustin Javier"},
+  {legajo:"168", nombre:"Chaparro Matias"},
+  {legajo:"169", nombre:"Medina Orlando Javier"},
+  {legajo:"171", nombre:"Royes Carlos"},
+  {legajo:"173", nombre:"Pacios Marcelo"},
+  {legajo:"174", nombre:"Fernandez amir Damian"},
+  {legajo:"175", nombre:"Juarez Santiago"},
+  {legajo:"176", nombre:"Trejo Vicente"},
+  {legajo:"181", nombre:"Perez Gonzalo Joel"},
+  {legajo:"182", nombre:"Giuffrida Melisa Soledad"},
+  {legajo:"183", nombre:"Robledo Santiago Martin"},
+  {legajo:"200", nombre:"Rodriguez Pablo"},
+  {legajo:"201", nombre:"Rodriguez Karin"},
+  {legajo:"202", nombre:"Gomez Jorge – Contador"},
+  {legajo:"203", nombre:"Rodriguez Brenda"},
+];
+
+const log = document.getElementById("log");
+function addLog(msg, cls="") {
+  const span = document.createElement("span");
+  span.className = cls;
+  span.textContent = msg + "\n";
+  log.appendChild(span);
+  log.scrollTop = log.scrollHeight;
+}
+
+document.getElementById("btnCargar").addEventListener("click", async () => {
+  const email = prompt("Tu email de admin (ej: admin@signoplast.local):");
+  if(!email) return;
+  const pass = prompt("Tu contraseña:");
+  if(!pass) return;
+
+  document.getElementById("btnCargar").disabled = true;
+  addLog("Iniciando sesión...");
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    addLog("✓ Sesión iniciada. Cargando empleados...\n", "ok");
+
+    let ok = 0, err = 0;
+    for(const emp of empleados){
+      try {
+        await addDoc(collection(db, "employees"), {
+          ...emp, estado: "activo", temporal: false, createdAt: serverTimestamp()
+        });
+        addLog(`✓ ${emp.legajo} — ${emp.nombre}`, "ok");
+        ok++;
+      } catch(e) {
+        addLog(`✗ Error en ${emp.nombre}: ${e.message}`, "err");
+        err++;
+      }
+    }
+    addLog(`\n¡Listo! ${ok} empleados cargados. ${err > 0 ? err + " errores." : "Sin errores."}\nYa podés cerrar esta pestaña.`, "ok");
+  } catch(e) {
+    addLog("✗ Error de login: " + e.message, "err");
+    document.getElementById("btnCargar").disabled = false;
+  }
+});
+</script>
+</body>
+</html>
